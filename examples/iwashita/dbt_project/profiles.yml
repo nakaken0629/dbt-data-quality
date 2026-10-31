@@ -1,0 +1,6 @@
+dbt_quality_sample:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: dev.duckdb

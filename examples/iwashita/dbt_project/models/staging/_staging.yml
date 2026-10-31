@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: stg_companies
+    description: >
+      企業マスタのステージングモデル。
+      raw_companiesのfounded_dateを正規化し、DATE型への変換を行う
+      （Layer 1: 設計による品質担保）。
+    tests:
+      - elementary.volume_anomalies:
+          arguments:
+            timestamp_column: founded_date
+    columns:
+      - name: company_id
+        description: "企業ID（主キー）"
+        tests:
+          - unique
+          - not_null
+      - name: company_name
+        description: "企業名"
+        tests:
+          - not_null
+      - name: founded_date
+        description: >
+          設立日（DATE型）。元データのフォーマットが不正で
+          パースできなかった場合はNULL。
+        tests:
+          - elementary.column_anomalies
+      - name: prefecture
+        description: "都道府県"
+        tests:
+          - not_null
+      - name: industry
+        description: "業種"
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["IT", "農業", "製造業", "観光", "物流", "医療", "食品", "エネルギー", "教育", "建設"]
+
+unit_tests:
+  - name: test_founded_date_normalization
+    description: "founded_dateの各フォーマット（ISO/スラッシュ/区切りなし）が正しくDATE型に変換されることを検証"
+    model: stg_companies
+    given:
+      - input: ref('raw_companies')
+        rows:
+          - {company_id: 1, company_name: "テスト株式会社", founded_date: "2015-04-01", prefecture: "東京都", industry: "IT"}
+          - {company_id: 2, company_name: "テスト合同会社", founded_date: "2019/06/01", prefecture: "大阪府", industry: "IT"}
+          - {company_id: 3, company_name: "テスト有限会社", founded_date: "20200401",   prefecture: "北海道", industry: "農業"}
+    expect:
+      rows:
+        - {company_id: 1, company_name: "テスト株式会社", founded_date: "2015-04-01", prefecture: "東京都", industry: "IT"}
+        - {company_id: 2, company_name: "テスト合同会社", founded_date: "2019-06-01", prefecture: "大阪府", industry: "IT"}
+        - {company_id: 3, company_name: "テスト有限会社", founded_date: "2020-04-01", prefecture: "北海道", industry: "農業"}

@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: mart_companies
+    description: >
+      企業マスタのmartモデル。
+      外部システムとの境界として、contractでスキーマを保証する
+      （Layer 2: ビルド時の強制）。
+    config:
+      contract:
+        enforced: true
+    columns:
+      - name: company_id
+        data_type: integer
+        description: "企業ID（主キー）"
+        constraints:
+          - type: not_null
+        tests:
+          - unique
+          - not_null
+      - name: company_name
+        data_type: varchar
+        description: "企業名"
+        constraints:
+          - type: not_null
+        tests:
+          - not_null
+      - name: founded_date
+        data_type: date
+        description: "設立日"
+      - name: prefecture
+        data_type: varchar
+        description: "都道府県"
+      - name: industry
+        data_type: varchar
+        description: "業種"
